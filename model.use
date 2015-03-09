@@ -1,0 +1,160 @@
+model Delivery
+
+-- Class template
+-- class Name 
+-- 	attributes
+-- 		attributeName : attributeType
+-- 	operations
+-- 		operationName (argumentName : argumentType) : returnType
+-- end
+class Point
+attributes 
+	x : Integer
+	y : Integer	
+operations 
+	d(p2 : Point ) : Integer
+		-- Calcul de la distance
+end
+
+class Drone
+attributes 
+	energy : Integer
+	capacity : Integer
+end
+
+class Box
+attributes
+	capacity : Integer
+operations 
+	voisins() : 
+	allInstances -> select (n| n.d() < 3)
+end
+
+class Command end
+class Warehouse end
+class Product end 
+class Map end
+class Time end
+
+-- Déterminer si à un point, il y a une Box ou une Warehouse
+
+
+constraints
+
+context Warehouse inv oneWarehouse : Warehouse.allInstances->size=1
+
+
+context b1,b2:Box inv noTwoBoxesAtSamePlace : 
+	 (b1.position4box.x = b2.position4box.x) and 
+	 (b1.position4box.y = b2.position4box.y)
+	 implies b1 = b2
+
+
+context d1,d2:Drone inv noTwoDronesAtSamePlace :
+	(d1.position4drone.x = d2.position4drone.x) and
+	(d1.position4drone.y = d2.position4drone.y)
+	implies d1 = d2
+
+
+context w:Warehouse inv neighbourBoxNearWarehouse :
+    Box.allInstances() -> exists (b |
+    ((b.position4box.x - w.position4wh.x <= 2) and
+    (b.position4box.x - w.position4wh.x >= -2) and
+    (b.position4box.y - w.position4wh.y = 0)) or
+    ((b.position4box.y - w.position4wh.y <= 2) and
+    (b.position4box.y - w.position4wh.y >= -2) and
+    (b.position4box.x - w.position4wh.x = 0)) or
+    ((b.position4box.x - w.position4wh.x = 1) and 
+    (b.position4box.y - w.position4wh.y = 1)) or
+    ((b.position4box.x - w.position4wh.x = -1) and 
+    (b.position4box.y - w.position4wh.y = 1)) or
+    ((b.position4box.x - w.position4wh.x = 1) and 
+    (b.position4box.y - w.position4wh.y = -1)) or
+    ((b.position4box.x - w.position4wh.x = -1) and 
+    (b.position4box.y - w.position4wh.y = -1)) )
+
+context Drone inv batteryPositive : self.energy >= 0
+context Drone inv batteryNotTooHigh : self.energy <= 3 
+context Drone inv maxDroneNb : Drone.allInstances -> size <= 15
+-- DNB
+context Box inv maxBoxNb : Box.allInstances -> size <=20
+-- RNB
+context Drone inv droneCapacityPositive : self.capacity >= 0
+context Drone inv droneCapacityMax : self.capacity <= 20 
+-- DCAP
+context Box inv boxCapacityPositive : self.capacity >= 0
+context Box inv boxCapacityMax : self.capacity <= 50
+-- RCAP
+
+context Point inv numberOfNeighbours : 
+	(self.neighbour-> size >=2) and
+	(self.neighbour-> size <=4)
+
+-- Il faut que les voisins ne soient pas à plus de 1
+context p:Point inv neighboursAreClose :
+	p.neighbour->forAll(n | 
+	(((n.x - p.x = 1) or
+	(n.x - p.x =-1)) and
+	n.y - p.y =0) or
+	(((n.y - p.y = 1) or
+	(n.y - p.y =-1)) and
+	n.x - p.x =0))
+
+-- Voisins doivent être différents !!! Pas besoin mais expliquer dans le dossier
+
+-- context Box noTwoBoxesTooFar :
+	--Pour toutes les boites
+	--self.Pointassocié.neighbour->exists (p | il y a une boite sur p) or
+	--self.Pointassocié.neighbour.neighbour -> (p | il y a une boite p différente de la boite de base)
+
+
+-- Associations
+association map between
+	Map [1] role map4point
+	Point [*] role point4map
+end
+
+association command between
+	Command [1] role cmd4product
+	Product [*] role product4cmd
+end
+
+association delivery between
+	Command [1] role cmd4drone
+	Drone [1] role drone4cmd
+end
+
+association destination between
+	Command [1] role cmd4Box
+	Box [1] role cmdDestination
+end
+
+association positionD between
+	Drone [1] role drone4position
+	Point [1] role position4drone
+end
+
+association positionB between
+	Box [1] role box4position
+	Point [1] role position4box
+end
+
+association positionW between
+	Warehouse [1] role wh4position
+	Point [1] role position4wh
+end
+
+association displacement between
+	Drone [1] role drone4displ
+	Point [1] role destination
+end
+
+association droneWarehouse between
+	Drone [*] role droneInWarehouse
+	Warehouse [1] role warehouse4drones
+end
+
+association neighbour between
+	Point [1] role pointConcerned
+	Point [2..4] role neighbour
+end
