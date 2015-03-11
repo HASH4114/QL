@@ -25,17 +25,17 @@ attributes
 	energy : Integer
 	capacity : Integer
 operations
-	empty()
+	fill(weight : Integer)
 	begin
-		self.capacity :=0;
+		self.capacity := weight;
 	end
 statemachines
-	psm NameOfStateMachine
+	psm StateMachineOfADrone
 		states
 			startUp:initial
 			waitingForCmd
 		transitions
-			startUp -> waitingForCmd {empty()}
+			startUp -> waitingForCmd {fill()}
 	end
 end
 
@@ -47,11 +47,41 @@ operations
 		Box.allInstances() -> select (n | d(n) < 3)
 	voisinsPlus() : Set(Box) =
 		self.voisins() -> closure (b|b.voisins())
+	droneOnMyself() : Boolean =
+		if(Drone.allInstances()->exists (d | ((self.x-d.position4drone.x).abs + (self.y-d.position4drone.y).abs) = 0 )) then true
+		else false endif
+
+
+
+-- statemachines
+--	psm StateMachineForBox
+--		states
+--			free:initial
+--			full
+--			occupied
+--		transitions
+--			free -> occupied {droneOnMyself()}
+--	end
 end
 
-class Command end
-class Warehouse < Point
+class Command
+operations
+	f1()
+	begin
+
+	end
+statemachines
+	psm StateMachineForACommand
+		states
+			Waiting:initial
+			Assigned
+			Finished
+		transitions
+			Waiting -> Assigned { f1() }
+			Assigned -> Finished { f1() }
+	end
 end
+class Warehouse < Box end
 class Product end 
 class Map end
 class Time end

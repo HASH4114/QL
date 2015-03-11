@@ -14,12 +14,12 @@ open model.use
 
 !set w.x := 0 
 !set w.y := 0
-!set b1.x := 4
+!set b1.x := 5
 !set b1.y := 0
 !set b2.x := 0
-!set b2.y := 4
-!set b3.x := 5
-!set b3.y := 1
+!set b2.y := 5
+!set b3.x := 0
+!set b3.y := 7
 
 !insert (p0,p1) into neighbour
 !insert (p0,p2) into neighbour
