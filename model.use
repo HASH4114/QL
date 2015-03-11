@@ -11,33 +11,50 @@ class Point
 attributes 
 	x : Integer
 	y : Integer	
-operations 
-	d(p2 : Point ) : Integer
-		-- Calcul de la distance
+operations
+	-- Computing the distance between two points 
+	d(p2 : Point ) : Integer =
+		(self.x - p2.x).abs + (self.y - p2.y).abs
+	-- Déterminer si à un point, il y a une Box ou une Warehouse
+	--whatObject() : Integer =
+	--	if 
 end
 
 class Drone
 attributes 
 	energy : Integer
 	capacity : Integer
+operations
+	empty()
+	begin
+		self.capacity :=0;
+	end
+statemachines
+	psm NameOfStateMachine
+		states
+			startUp:initial
+			waitingForCmd
+		transitions
+			startUp -> waitingForCmd {empty()}
+	end
 end
 
-class Box
+class Box < Point
 attributes
 	capacity : Integer
 operations 
-	voisins() : 
-	allInstances -> select (n| n.d() < 3)
+	voisins() : Set(Box) =
+		Box.allInstances() -> select (n | d(n) < 3)
+	voisinsPlus() : Set(Box) =
+		self.voisins() -> closure (b|b.voisins())
 end
 
 class Command end
-class Warehouse end
+class Warehouse < Point
+end
 class Product end 
 class Map end
 class Time end
-
--- Déterminer si à un point, il y a une Box ou une Warehouse
-
 
 constraints
 
@@ -45,8 +62,8 @@ context Warehouse inv oneWarehouse : Warehouse.allInstances->size=1
 
 
 context b1,b2:Box inv noTwoBoxesAtSamePlace : 
-	 (b1.position4box.x = b2.position4box.x) and 
-	 (b1.position4box.y = b2.position4box.y)
+	 (b1.x = b2.x) and 
+	 (b1.y = b2.y)
 	 implies b1 = b2
 
 
@@ -57,21 +74,7 @@ context d1,d2:Drone inv noTwoDronesAtSamePlace :
 
 
 context w:Warehouse inv neighbourBoxNearWarehouse :
-    Box.allInstances() -> exists (b |
-    ((b.position4box.x - w.position4wh.x <= 2) and
-    (b.position4box.x - w.position4wh.x >= -2) and
-    (b.position4box.y - w.position4wh.y = 0)) or
-    ((b.position4box.y - w.position4wh.y <= 2) and
-    (b.position4box.y - w.position4wh.y >= -2) and
-    (b.position4box.x - w.position4wh.x = 0)) or
-    ((b.position4box.x - w.position4wh.x = 1) and 
-    (b.position4box.y - w.position4wh.y = 1)) or
-    ((b.position4box.x - w.position4wh.x = -1) and 
-    (b.position4box.y - w.position4wh.y = 1)) or
-    ((b.position4box.x - w.position4wh.x = 1) and 
-    (b.position4box.y - w.position4wh.y = -1)) or
-    ((b.position4box.x - w.position4wh.x = -1) and 
-    (b.position4box.y - w.position4wh.y = -1)) )
+    Box.allInstances() -> exists (b | d(b) < 3 )
 
 context Drone inv batteryPositive : self.energy >= 0
 context Drone inv batteryNotTooHigh : self.energy <= 3 
@@ -102,11 +105,9 @@ context p:Point inv neighboursAreClose :
 
 -- Voisins doivent être différents !!! Pas besoin mais expliquer dans le dossier
 
--- context Box noTwoBoxesTooFar :
-	--Pour toutes les boites
-	--self.Pointassocié.neighbour->exists (p | il y a une boite sur p) or
-	--self.Pointassocié.neighbour.neighbour -> (p | il y a une boite p différente de la boite de base)
-
+context b1:Box inv transitiveClosureComplete :
+	b1.voisinsPlus()->includesAll(Box.allInstances())
+	
 
 -- Associations
 association map between
@@ -132,16 +133,6 @@ end
 association positionD between
 	Drone [1] role drone4position
 	Point [1] role position4drone
-end
-
-association positionB between
-	Box [1] role box4position
-	Point [1] role position4box
-end
-
-association positionW between
-	Warehouse [1] role wh4position
-	Point [1] role position4wh
 end
 
 association displacement between

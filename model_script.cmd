@@ -4,6 +4,7 @@ open model.use
 !create w : Warehouse
 !create b1 : Box
 !create b2 : Box
+!create b3 : Box
 !create p0 : Point
 !create p1 : Point
 !create p2 : Point
@@ -11,17 +12,15 @@ open model.use
 !create p4 : Point
 !create p5 : Point
 
-!set p0.x := 0 
-!set p0.y := 0
-!set p1.x := 1
-!set p1.y := 0
-!set p2.x := 0
-!set p2.y := 1
-!set p3.x := 1
-!set p3.y := 1
+!set w.x := 0 
+!set w.y := 0
+!set b1.x := 4
+!set b1.y := 0
+!set b2.x := 0
+!set b2.y := 4
+!set b3.x := 5
+!set b3.y := 1
 
-!insert (w,p0) into positionW
-!insert (b1,p1) into positionB
 !insert (p0,p1) into neighbour
 !insert (p0,p2) into neighbour
 !insert (p1,p0) into neighbour
