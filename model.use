@@ -169,7 +169,9 @@ context b1:Box inv transitiveClosureComplete :
 	
 context Drone::recharge()
 	pre rechargePre1: self.energy < 3
-	pre rechargePre2: Box.allInstances->exists (b | distance(b) =0)
+	pre rechargePre2: Box.allInstances->exists (b | b.distance(self) =0)
+	post rechargePost1: Box.allInstances->exists (b | b.distance(self) =0)
+	-- post rechargePost2 : tempsAprès = tempsAvant + nbRecharges
 
 
 --___________________________
