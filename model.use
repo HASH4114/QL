@@ -167,6 +167,11 @@ context b1:Box inv transitiveClosureComplete :
 --Sur les fonctions (post et pré condition)
 --_____________
 	
+context Drone::recharge()
+	pre rechargePre1: self.energy < 3
+	pre rechargePre2: Box.allInstances->exists (b | distance(b) =0)
+
+
 --___________________________
 --ASSOCIATIONS
 --___________________________ 
