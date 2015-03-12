@@ -1,5 +1,7 @@
 model Delivery
 
+
+enum Etat_Box {Free, Occupied, Full}
 --_________________________
 --CLASSES
 --_________________________
@@ -19,6 +21,7 @@ end
 class Box < Point
     attributes
         capacity : Integer
+        state : Etat_Box init = Etat_Box::Free
     operations 
         voisins() : Set(Box) =
             Box.allInstances() -> select (n | d(n) < 3)
@@ -26,18 +29,21 @@ class Box < Point
             self.voisins() -> closure (b|b.voisins())
         distance(d : Drone) : Integer =
             (self.x-d.position4drone.x).abs + (self.y-d.position4drone.y).abs
-        droneOnMyself() : Boolean =
-            if(Drone.allInstances()->exists (d | distance(d)= 0 )) then true
-        else false endif
+    	setOccupied()
+    	begin
+    		self.state := Etat_Box::Occupied;
+		end
 
 statemachines
     psm StateMachineForBox
         states
-            free:initial
+        	startUp:initial
+            free
             full
             occupied
          transitions
-            free -> occupied {droneOnMyself()}
+         	startUp -> free { create }
+            free -> occupied {[Drone.allInstances()->exists(d | distance(d) = 0)] setOccupied()}
     end
 end
 
@@ -49,7 +55,7 @@ operations
 	
 	assign(c : Command)
 	begin
-		self.cmd4drone := c;
+		insert(c, self) into delivery;
 	end
 
 	fill(weight : Integer)
@@ -71,7 +77,7 @@ statemachines
 			productsCharged
 		transitions
 			startUp -> commandAssigned {assign()}
-			commandAssigned -> productsCharges {fill()}
+			commandAssigned -> productsCharged {fill()}
 	end
 end
 
