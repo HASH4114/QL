@@ -1,12 +1,9 @@
 model Delivery
 
--- Class template
--- class Name 
--- 	attributes
--- 		attributeName : attributeType
--- 	operations
--- 		operationName (argumentName : argumentType) : returnType
--- end
+--_________________________
+--CLASSES
+--_________________________
+
 class Point
 attributes 
 	x : Integer
@@ -16,8 +13,32 @@ operations
 	d(p2 : Point ) : Integer =
 		(self.x - p2.x).abs + (self.y - p2.y).abs
 	-- Déterminer si à un point, il y a une Box ou une Warehouse
-	--whatObject() : Integer =
-	--	if 
+	-- voir droneOnMyself. ^^
+end
+
+class Box < Point
+    attributes
+        capacity : Integer
+    operations 
+        voisins() : Set(Box) =
+            Box.allInstances() -> select (n | d(n) < 3)
+        voisinsPlus() : Set(Box) =
+            self.voisins() -> closure (b|b.voisins())
+        distance(d : Drone) : Integer =
+            (self.x-d.position4drone.x).abs + (self.y-d.position4drone.y).abs
+        droneOnMyself() : Boolean =
+            if(Drone.allInstances()->exists (d | distance(d)= 0 )) then true
+        else false endif
+
+statemachines
+    psm StateMachineForBox
+        states
+            free:initial
+            full
+            occupied
+         transitions
+            free -> occupied {droneOnMyself()}
+    end
 end
 
 class Drone
@@ -25,43 +46,33 @@ attributes
 	energy : Integer
 	capacity : Integer
 operations
+	
+	assign(c : Command)
+	begin
+		self.cmd4drone := c;
+	end
+
 	fill(weight : Integer)
 	begin
 		self.capacity := weight;
 	end
+
+	recharge ()
+	begin
+		-- time ++
+		self.energy := self.energy +1;
+	end
+
 statemachines
 	psm StateMachineOfADrone
 		states
 			startUp:initial
-			waitingForCmd
+			commandAssigned
+			productsCharged
 		transitions
-			startUp -> waitingForCmd {fill()}
+			startUp -> commandAssigned {assign()}
+			commandAssigned -> productsCharges {fill()}
 	end
-end
-
-class Box < Point
-attributes
-	capacity : Integer
-operations 
-	voisins() : Set(Box) =
-		Box.allInstances() -> select (n | d(n) < 3)
-	voisinsPlus() : Set(Box) =
-		self.voisins() -> closure (b|b.voisins())
-	droneOnMyself() : Boolean =
-		if(Drone.allInstances()->exists (d | ((self.x-d.position4drone.x).abs + (self.y-d.position4drone.y).abs) = 0 )) then true
-		else false endif
-
-
-
--- statemachines
---	psm StateMachineForBox
---		states
---			free:initial
---			full
---			occupied
---		transitions
---			free -> occupied {droneOnMyself()}
---	end
 end
 
 class Command
@@ -86,7 +97,16 @@ class Product end
 class Map end
 class Time end
 
+
+--_______________________________
+--CONTRAINTES
+--_______________________________
+
 constraints
+
+--_____________
+--Sur les classes
+--_____________
 
 context Warehouse inv oneWarehouse : Warehouse.allInstances->size=1
 
@@ -137,9 +157,14 @@ context p:Point inv neighboursAreClose :
 
 context b1:Box inv transitiveClosureComplete :
 	b1.voisinsPlus()->includesAll(Box.allInstances())
+--_____________
+--Sur les fonctions (post et pré condition)
+--_____________
 	
+--___________________________
+--ASSOCIATIONS
+--___________________________ 
 
--- Associations
 association map between
 	Map [1] role map4point
 	Point [*] role point4map
