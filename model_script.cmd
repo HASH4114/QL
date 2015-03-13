@@ -11,6 +11,7 @@ open model.use
 !create p3 : Point
 !create p4 : Point
 !create p5 : Point
+!create d1 : Drone
 
 !set w.x := 0 
 !set w.y := 0
@@ -20,6 +21,7 @@ open model.use
 !set b2.y := 5
 !set b3.x := 0
 !set b3.y := 7
+-- !set d1.energy =3
 
 !insert (p0,p1) into neighbour
 !insert (p0,p2) into neighbour
@@ -29,5 +31,7 @@ open model.use
 !insert (p3,p1) into neighbour
 !insert (p2,p3) into neighbour
 !insert (p3,p2) into neighbour
+
+!insert (d1,w0) into positionD
 
 check
