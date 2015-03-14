@@ -2,6 +2,7 @@ model Delivery
 
 
 enum Etat_Box {Free, Occupied, Full}
+enum Etat_Command {Waiting,Assigned,Finished}
 --_________________________
 --CLASSES
 --_________________________
@@ -15,7 +16,6 @@ class Point
 		d(p2 : Point ) : Integer =
 			(self.x - p2.x).abs + (self.y - p2.y).abs
 		-- Déterminer si à un point, il y a une Box ou une Warehouse
-		-- voir droneOnMyself. ^^
 end
 
 class Box < Point
@@ -33,7 +33,14 @@ class Box < Point
     	begin
     		self.state := Etat_Box::Occupied;
 		end
-
+		setFree()
+		begin
+			self.state := Etat_Box::Free;
+		end
+		setFull()
+		begin
+			self.state := Etat_Box::Full;
+		end
 	statemachines
     psm StateMachineForBox
         states
@@ -43,64 +50,82 @@ class Box < Point
             occupied
          transitions
          	startUp -> free { create }
-            free -> occupied {[Drone.allInstances()->exists(d | distance(d) = 0)] setOccupied()}
+            free -> occupied {[Drone.allInstances()->one(d | distance(d) = 0)] setOccupied()}
+            occupied -> free {[Drone.allInstances()->forAll(d | distance(d) <> 0)] setFree()}
+            free -> full {[self.capacity = 50] setFull()}	--RCAP
+            occupied -> full {[self.capacity = 50] setFull()}
+            full -> free {[self.capacity = 0 and Drone.allInstances()->forAll(d | distance(d) <> 0)] setFree()}
+            full -> occupied {[self.capacity = 0 and Drone.allInstances()->one(d | distance(d) = 0)] setOccupied()}
     end
 end
 
 class Drone
-attributes 
-	energy : Integer init = 0
-	capacity : Integer init = 0
-operations
-	
-	assign(c : Command)
-	begin
-		insert(c, self) into delivery;
-	end
 
-	//TODO : poids total du drone += poids des produits
-	fill(weight : Integer)
-	begin
-		self.capacity := weight;
-	end
+	attributes 
+		energy : Integer init = 0
+		capacity : Integer init = 0
+	operations
+		
+		assign(c : Command)
+		begin
+			insert(c, self) into delivery;
+		end
 
-	recharge ()
-	begin
-		-- time ++
-		self.energy := self.energy +1;
-	end
+		fill()
+		begin
+			for p in self.cmd4drone.product4cmd do
+				self.capacity := self.capacity + p.weight
+			end
+		end
 
-statemachines
-	psm StateMachineOfADrone
-		states
-			startUp:initial
-			commandAssigned
-			productsCharged
-		transitions
-			startUp -> commandAssigned {assign()}
-			commandAssigned -> productsCharged {fill()}
-	end
+		recharge ()
+		begin
+			-- time ++
+			self.energy := self.energy +1;
+		end
+
+	statemachines
+		psm StateMachineOfADrone
+			states
+				startUp:initial
+				commandAssigned
+				productsCharged
+			transitions
+				startUp -> commandAssigned {assign()}
+				commandAssigned -> productsCharged {fill()}
+		end
 end
 
 class Command
-operations
- 	f1()
-	begin
-
-	end
-statemachines
-	psm StateMachineForACommand
-		states
-			Waiting:initial
-			Assigned
-			Finished
-		transitions
-			Waiting -> Assigned { f1() }
-			Assigned -> Finished { f1() }
-	end
+	attributes
+		state : Etat_Command
+	operations
+	 	setAssigned()
+	 	begin
+	 		self.state := Etat_Command::Assigned
+	 	end
+	 	setFinished()
+	 	begin
+	 		self.state := Etat_Command::Finished
+	 	end
+	statemachines
+		psm StateMachineForACommand
+			states
+				startUp:initial
+				Waiting
+				Assigned
+				Finished:final
+			transitions
+				startUp -> Waiting { create }
+				Waiting -> Assigned { [Drone.allInstances()->one(d|d.cmd4drone = self)] setAssigned() }
+				Assigned -> Finished { [Drone.allInstances()->one(d|d.cmd4drone = self and d.position4drone.x = self.cmdDestination.x and d.position4drone.y = self.cmdDestination.y and d.capacity = 0)] setFinished() }
+		end
 end
 class Warehouse < Box end
-class Product end 
+class Product
+	attributes
+		weight : Integer
+end 
 class Map end
 class Time end
 
@@ -174,7 +199,7 @@ context Drone::recharge()
 	post rechargePost1: Box.allInstances->exists (b | b.distance(self) =0)
 	-- post rechargePost2 : tempsAprès = tempsAvant + nbRecharges
 
-context Drone::fill(weight:Integer)
+context Drone::fill()
 	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre isEmpty: self.capacity = 0
 	--On considère qu'une commande correspond à un seul aller-retour

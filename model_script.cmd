@@ -60,5 +60,7 @@ open model.use
 --!insert (p3,p2) into neighbour
 
 !insert (d1,w) into positionD
+! d1.recharge()
+! d1.fill()
 
 check
