@@ -84,6 +84,22 @@ class Drone
 			self.energy := self.energy +1;
 		end
 
+		unload()
+		begin
+			self.capacity := 0;
+			--Remplir la box la où on est. 
+		end
+
+		move (moveX : Integer, moveY : Integer)
+		begin
+			d.position4drone.x := d.position4drone.x + moveX;
+			d.position4drone.y := d.position4drone.y + moveY;
+		end
+
+		validateCmd()
+		begin
+			--Supprimer l'association entre Drone et Command
+		end
 	statemachines
 		psm StateMachineOfADrone
 			states
@@ -209,6 +225,7 @@ context Drone::assign(c:Command)
 	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre noCommandYet: not Command.allInstances-> exists(c | self.cmd4drone = c) 
 
+context 
 
 
 --___________________________
