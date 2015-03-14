@@ -92,13 +92,14 @@ class Drone
 
 		move (moveX : Integer, moveY : Integer)
 		begin
-			d.position4drone.x := d.position4drone.x + moveX;
-			d.position4drone.y := d.position4drone.y + moveY;
+			self.position4drone.x := self.position4drone.x + moveX;
+			self.position4drone.y := self.position4drone.y + moveY;
 		end
 
 		validateCmd()
 		begin
 			--Supprimer l'association entre Drone et Command
+			delete (self.cmd4drone, self) from delivery;
 		end
 	statemachines
 		psm StateMachineOfADrone
@@ -225,17 +226,12 @@ context Drone::assign(c:Command)
 	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre noCommandYet: not Command.allInstances-> exists(c | self.cmd4drone = c) 
 
-context 
+-- context 
 
 
 --___________________________
 --ASSOCIATIONS
 --___________________________ 
-
-association map between
-	Map [1] role map4point
-	Point [*] role point4map
-end
 
 association command between
 	Command [1] role cmd4product
