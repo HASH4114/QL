@@ -126,7 +126,7 @@ class Product
 	attributes
 		weight : Integer
 end 
-class Map end
+
 class Time end
 
 
