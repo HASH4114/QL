@@ -43,7 +43,7 @@ class Box < Point
             occupied
          transitions
          	startUp -> free { create }
-            free -> occupied {[Drone.allInstances()->exists(d | distance(d) = 0)] setOccupied()}
+            free -> occupied {[Drone.allInstances()->one(d | distance(d) = 0)] setOccupied()}
     end
 end
 
@@ -58,10 +58,11 @@ operations
 		insert(c, self) into delivery;
 	end
 
-	//TODO : poids total du drone += poids des produits
-	fill(weight : Integer)
+	fill()
 	begin
-		self.capacity := weight;
+		for p in self.cmd4drone.product4cmd do
+			self.capacity := self.capacity + p.weight
+		end
 	end
 
 	recharge ()
@@ -100,7 +101,10 @@ statemachines
 	end
 end
 class Warehouse < Box end
-class Product end 
+class Product
+	attributes
+		weight : Integer
+end 
 class Map end
 class Time end
 
@@ -174,7 +178,7 @@ context Drone::recharge()
 	post rechargePost1: Box.allInstances->exists (b | b.distance(self) =0)
 	-- post rechargePost2 : tempsAprès = tempsAvant + nbRecharges
 
-context Drone::fill(weight:Integer)
+context Drone::fill()
 	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre isEmpty: self.capacity = 0
 	--On considère qu'une commande correspond à un seul aller-retour
