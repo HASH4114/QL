@@ -2,6 +2,7 @@ model Delivery
 
 
 enum Etat_Box {Free, Occupied, Full}
+enum Etat_Command {Waiting,Assigned,Finished}
 --_________________________
 --CLASSES
 --_________________________
@@ -15,7 +16,6 @@ class Point
 		d(p2 : Point ) : Integer =
 			(self.x - p2.x).abs + (self.y - p2.y).abs
 		-- Déterminer si à un point, il y a une Box ou une Warehouse
-		-- voir droneOnMyself. ^^
 end
 
 class Box < Point
@@ -41,8 +41,6 @@ class Box < Point
 		begin
 			self.state := Etat_Box::Full;
 		end
-
-
 	statemachines
     psm StateMachineForBox
         states
@@ -98,20 +96,28 @@ class Drone
 end
 
 class Command
+	attributes
+		state : Etat_Command
 	operations
-	 	f1()
-		begin
-
-		end
+	 	setAssigned()
+	 	begin
+	 		self.state := Etat_Command::Assigned
+	 	end
+	 	setFinished()
+	 	begin
+	 		self.state := Etat_Command::Finished
+	 	end
 	statemachines
 		psm StateMachineForACommand
 			states
-				Waiting:initial
+				startUp:initial
+				Waiting
 				Assigned
-				Finished
+				Finished:final
 			transitions
-				Waiting -> Assigned { f1() }
-				Assigned -> Finished { f1() }
+				startUp -> Waiting { create }
+				Waiting -> Assigned { [Drone.allInstances()->one(d|d.cmd4drone = self)] setAssigned() }
+				Assigned -> Finished { [Drone.allInstances()->one(d|d.cmd4drone = self and d.position4drone.x = self.cmdDestination.x and d.position4drone.y = self.cmdDestination.y and d.capacity = 0)] setFinished() }
 		end
 end
 class Warehouse < Box end
