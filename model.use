@@ -33,6 +33,15 @@ class Box < Point
     	begin
     		self.state := Etat_Box::Occupied;
 		end
+		setFree()
+		begin
+			self.state := Etat_Box::Free;
+		end
+		setFull()
+		begin
+			self.state := Etat_Box::Full;
+		end
+
 
 	statemachines
     psm StateMachineForBox
@@ -44,61 +53,66 @@ class Box < Point
          transitions
          	startUp -> free { create }
             free -> occupied {[Drone.allInstances()->one(d | distance(d) = 0)] setOccupied()}
+            occupied -> free {[Drone.allInstances()->forAll(d | distance(d) <> 0)] setFree()}
+            free -> full {[self.capacity = 50] setFull()}	--RCAP
+            occupied -> full {[self.capacity = 50] setFull()}
+            full -> free {[self.capacity = 0 and Drone.allInstances()->forAll(d | distance(d) <> 0)] setFree()}
+            full -> occupied {[self.capacity = 0 and Drone.allInstances()->one(d | distance(d) = 0)] setOccupied()}
     end
 end
 
 class Drone
-attributes 
-	energy : Integer init = 0
-	capacity : Integer
-operations
-	
-	assign(c : Command)
-	begin
-		insert(c, self) into delivery;
-	end
-
-	fill()
-	begin
-		for p in self.cmd4drone.product4cmd do
-			self.capacity := self.capacity + p.weight
+	attributes 
+		energy : Integer init = 0
+		capacity : Integer
+	operations
+		
+		assign(c : Command)
+		begin
+			insert(c, self) into delivery;
 		end
-	end
 
-	recharge ()
-	begin
-		-- time ++
-		self.energy := self.energy +1;
-	end
+		fill()
+		begin
+			for p in self.cmd4drone.product4cmd do
+				self.capacity := self.capacity + p.weight
+			end
+		end
 
-statemachines
-	psm StateMachineOfADrone
-		states
-			startUp:initial
-			commandAssigned
-			productsCharged
-		transitions
-			startUp -> commandAssigned {assign()}
-			commandAssigned -> productsCharged {fill()}
-	end
+		recharge ()
+		begin
+			-- time ++
+			self.energy := self.energy +1;
+		end
+
+	statemachines
+		psm StateMachineOfADrone
+			states
+				startUp:initial
+				commandAssigned
+				productsCharged
+			transitions
+				startUp -> commandAssigned {assign()}
+				commandAssigned -> productsCharged {fill()}
+		end
 end
 
 class Command
-operations
- 	f1()
-	begin
+	operations
+	 	f1()
+		begin
 
-	end
-statemachines
-	psm StateMachineForACommand
-		states
-			Waiting:initial
-			Assigned
-			Finished
-		transitions
-			Waiting -> Assigned { f1() }
-			Assigned -> Finished { f1() }
-	end
+		end
+	statemachines
+		psm StateMachineForACommand
+			states
+				Waiting:initial
+				Assigned
+				Finished
+			transitions
+				Waiting -> Assigned { f1() }
+				Assigned -> Finished { f1() }
+		end
 end
 class Warehouse < Box end
 class Product
