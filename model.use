@@ -289,7 +289,7 @@ context Drone::assign(c:Command)
 context Drone::unloadAndValidate()
 	pre droneNotEmpty : self.capacity <> 0
 	pre droneIsAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
-	pre boxIsDestination : Box.allInstances->one(b | b.distance(self) = 0) and self.cmd4drone.cmdDestination.x=self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y
+	pre boxIsDestination : self.cmd4drone.cmdDestination.x=self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y
 	post droneIsEmpty : self.capacity = 0
 	post droneIsStillAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
 
