@@ -3,6 +3,7 @@ model Delivery
 
 enum Etat_Box {Free, Occupied, Full}
 enum Etat_Command {Waiting,Assigned,Finished}
+enum Etat_Drone {Created, WaitingForCommand, Assigned, Charging, OnWarehouse, OnAPoint, OnABox, FullBattery, Loaded, Empty}
 --_________________________
 --CLASSES
 --_________________________
@@ -64,30 +65,42 @@ class Drone
 	attributes 
 		energy : Integer init = 0
 		capacity : Integer init = 0
+		state : Etat_Drone init = Etat_Drone::WaitingForCommand
 	operations
+
+		distance(p:Point) : Integer = (self.position4drone.x - p.x).abs + (self.position4drone.y - p.y).abs;
 		
 		assign(c : Command)
 		begin
 			insert(c, self) into delivery;
+			self.state := Etat_Drone::Assigned;
 		end
 
 		fill()
 		begin
 			for p in self.cmd4drone.product4cmd do
 				self.capacity := self.capacity + p.weight
-			end
+			end;
+			self.state := Etat_Drone::Loaded;
 		end
 
 		recharge ()
 		begin
 			-- time ++
 			self.energy := self.energy +1;
+			self.state := Etat_Drone::Charging;
 		end
 
 		unload()
 		begin
-			self.capacity := 0;
+			declare b1 : Set(Box);
 			--Remplir la box la où on est. 
+			b1 := Box.allInstances().select( b | distance(b) = 0);
+			for b in b1 do
+				b.capacity := b.capacity + self.capacity;
+			end;
+
+			self.capacity := 0;
 		end
 
 		move (moveX : Integer, moveY : Integer)
@@ -98,18 +111,61 @@ class Drone
 
 		validateCmd()
 		begin
-			--Supprimer l'association entre Drone et Command
 			delete (self.cmd4drone, self) from delivery;
 		end
+
+		setOnWarehouse()
+		begin
+			self.state := Etat_Drone::OnWarehouse
+		end
+
+		setOnABox()
+		begin
+			self.state := Etat_Drone::OnABox
+		end
+
+		setOnAPoint()
+		begin
+			self.state := Etat_Drone::OnAPoint
+		end
+
+		setEmpty()
+		begin
+			self.state := Etat_Drone::Empty;
+		end
+
 	statemachines
 		psm StateMachineOfADrone
 			states
 				startUp:initial
+				waitingForCommand
 				commandAssigned
 				productsCharged
+				onAPoint
+				onABox
+				onWarehouse
+				atDeliveryBox
+				unloaded
+				batteryCharging
+				batteryCharged
 			transitions
-				startUp -> commandAssigned {assign()}
-				commandAssigned -> productsCharged {fill()}
+				startUp -> waitingForCommand { create }
+				waitingForCommand -> commandAssigned { assign() }
+				commandAssigned -> productsCharged { fill() }
+				productsCharged -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
+				productsCharged -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
+				productsCharged -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
+				onWarehouse -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
+				onWarehouse -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
+				onAPoint -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
+				onAPoint -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
+				onABox -> batteryCharging {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
+				batteryCharging -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy = 3] setOnABox()}
+				batteryCharging -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0) and self.energy = 3] setOnWarehouse()}
+				onABox -> atDeliveryBox {[self.cmd4drone.cmdDestination.x = self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y] unload()}
+				atDeliveryBox -> unloaded {[self.capacity = 0] setEmpty()}
+				unloaded -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
+				unloaded -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
 		end
 end
 
@@ -171,6 +227,13 @@ context d1,d2:Drone inv noTwoDronesAtSamePlace :
 	(d1.position4drone.y = d2.position4drone.y)
 	implies d1 = d2
 
+context p:Point inv noTwoDronesAtSameSpot:
+	if not p.oclIsTypeOf(Warehouse) then
+		Drone.allInstances().select(d|d.distance(p) = 0)->size() <= 1 and
+		Drone.allInstances().select(d|d.distance(p) = 0)->size() >= 0
+	else
+		Drone.allInstances().select(d|d.distance(p) = 0)->size() >= 0
+	endif
 
 context w:Warehouse inv neighbourBoxNearWarehouse :
     Box.allInstances() -> exists (b | d(b) < 3 )
