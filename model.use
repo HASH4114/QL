@@ -86,12 +86,12 @@ class Drone
 
 		recharge ()
 		begin
-			-- time ++
+			-- TODO : time ++
 			self.energy := self.energy +1;
 			self.state := Etat_Drone::Charging;
 		end
 
-		unload()
+		unloadAndValidate()
 		begin
 			declare b1 : Set(Box);
 			--Remplir la box la où on est. 
@@ -101,17 +101,14 @@ class Drone
 			end;
 
 			self.capacity := 0;
+			delete (self.cmd4drone, self) from delivery;
 		end
 
 		move (moveX : Integer, moveY : Integer)
 		begin
 			self.position4drone.x := self.position4drone.x + moveX;
 			self.position4drone.y := self.position4drone.y + moveY;
-		end
-
-		validateCmd()
-		begin
-			delete (self.cmd4drone, self) from delivery;
+			self.energy := self.energy -1;
 		end
 
 		setOnWarehouse()
@@ -274,22 +271,32 @@ context b1:Box inv transitiveClosureComplete :
 --_____________
 	
 context Drone::recharge()
-	pre rechargePre1: self.energy < 3
-	pre rechargePre2: Box.allInstances->exists (b | b.distance(self) =0)
-	post rechargePost1: Box.allInstances->exists (b | b.distance(self) =0)
+	pre droneIsNotFullyRecharged: self.energy < 3
+	pre droneIsAtBox: Box.allInstances->exists (b | b.distance(self) =0)
+	post droneIsStillAtBox: Box.allInstances->exists (b | b.distance(self) =0)
 	-- post rechargePost2 : tempsAprès = tempsAvant + nbRecharges
 
 context Drone::fill()
-	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
-	pre isEmpty: self.capacity = 0
+	pre droneIsInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
+	pre droneIsEmpty: self.capacity = 0
 	--On considère qu'une commande correspond à un seul aller-retour
 
 context Drone::assign(c:Command)	
 	--On considère qu'une commande correspond à un seul aller-retour
-	pre beInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
+	pre droneIsInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre noCommandYet: not Command.allInstances-> exists(c | self.cmd4drone = c) 
 
--- context 
+context Drone::unloadAndValidate()
+	pre droneNotEmpty : self.capacity <> 0
+	pre droneIsAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
+	post droneIsEmpty : self.capacity = 0
+	post droneIsStillAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
+
+context Drone::move(moveX:Integer, moveY:Integer)
+	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY)
+	pre droneEnergyIsGreaterThan1 : self.energy > 0
+	pre exactlyOneUnitLenghtMove : moveX + moveY = 1
+	post droneChangedLocation : ((self.position4drone.x <> self.position4drone.x@pre) and (self.position4drone.y = self.position4drone.y@pre)) or ((self.position4drone.x = self.position4drone.x@pre) and (self.position4drone.y <> self.position4drone.y@pre))
 
 
 --___________________________
@@ -307,26 +314,11 @@ association delivery between
 end
 
 association destination between
-	Command [1] role cmd4Box
+	Command [0..1] role cmd4Box
 	Box [1] role cmdDestination
 end
 
 association positionD between
-	Drone [1] role drone4position
+	Drone [0..1] role drone4position
 	Point [1] role position4drone
-end
-
-association displacement between
-	Drone [1] role drone4displ
-	Point [1] role destination
-end
-
-association droneWarehouse between
-	Drone [*] role droneInWarehouse
-	Warehouse [1] role warehouse4drones
-end
-
-association neighbour between
-	Point [1] role pointConcerned
-	Point [2..4] role neighbour
 end

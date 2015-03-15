@@ -15,6 +15,7 @@ open model.use
 !create b11 : Box
 !create b12 : Box
 !create d1 : Drone
+!create d2 : Drone
 !create c1 : Command
 
 !set w.x := 0 
@@ -43,30 +44,11 @@ open model.use
 !set b11.y := 0
 !set b12.x := 6
 !set b12.y := 1
-!set d1.energy =3
 
 
 !insert (d1,w) into positionD
+!insert (d2,b8) into positionD
 ! d1.recharge()
--- ! d1.fill()
+! d1.fill()
 
 check
-
-
--------------------------------
-
---!create p0 : Point
---!create p1 : Point
---!create p2 : Point
---!create p3 : Point
---!create p4 : Point
---!create p5 : Point
-
---!insert (p0,p1) into neighbour
---!insert (p0,p2) into neighbour
---!insert (p1,p0) into neighbour
---!insert (p2,p0) into neighbour
---!insert (p1,p3) into neighbour
---!insert (p3,p1) into neighbour
---!insert (p2,p3) into neighbour
---!insert (p3,p2) into neighbour
