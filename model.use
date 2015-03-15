@@ -159,7 +159,7 @@ class Drone
 				onABox -> batteryCharging {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
 				batteryCharging -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy = 3] setOnABox()}
 				batteryCharging -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0) and self.energy = 3] setOnWarehouse()}
-				onABox -> atDeliveryBox {[self.cmd4drone.cmdDestination.x = self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y] unload()}
+				onABox -> atDeliveryBox {[self.cmd4drone.cmdDestination.x = self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y] unloadAndValidate()}
 				atDeliveryBox -> unloaded {[self.capacity = 0] setEmpty()}
 				unloaded -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
 				unloaded -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
@@ -289,6 +289,7 @@ context Drone::assign(c:Command)
 context Drone::unloadAndValidate()
 	pre droneNotEmpty : self.capacity <> 0
 	pre droneIsAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
+	pre boxIsDestination : Box.allInstances->one(b | b.distance(self) = 0) and self.cmd4drone.cmdDestination.x=self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y
 	post droneIsEmpty : self.capacity = 0
 	post droneIsStillAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
 
