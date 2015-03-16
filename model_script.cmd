@@ -19,7 +19,8 @@ open model.use
 !create c1 : Command
 !create p1 : Product 
 !create p2 : Product 
-!create p3 : Product 
+!create p3 : Product
+!create pt1 : Point 
 
 !set w.x := 0 
 !set w.y := 0
@@ -50,15 +51,23 @@ open model.use
 !set p1.weight :=3
 !set p2.weight :=4
 !set p3.weight :=5
+!set pt1.x := 1
+!set pt1.y := 0
 
 
 !insert (d1,w) into positionD
-!insert (d2,b8) into positionD
+--!insert (d2,b8) into positionD
 !insert (c1, p1) into command
 !insert (c1, p2) into command
 !insert (c1, p3) into command
 !insert (c1, b8) into destination
--- ! d1.recharge()
--- ! d1.fill()
 
 check
+
+
+!d1.assignate(c1)
+!d1.fill()
+!d1.setOnWarehouse()
+!d1.move(1,0)
+!d1.move(1,0)
+!d1.unloadAndValidate()
