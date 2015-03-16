@@ -63,14 +63,14 @@ end
 class Drone
 
 	attributes 
-		energy : Integer init = 0
+		energy : Integer init = 3
 		capacity : Integer init = 0
 		state : Etat_Drone init = Etat_Drone::WaitingForCommand
 	operations
 
 		distance(p:Point) : Integer = (self.position4drone.x - p.x).abs + (self.position4drone.y - p.y).abs;
 		
-		assign(c : Command)
+		assignate(c : Command)
 		begin
 			insert(c, self) into delivery;
 			self.state := Etat_Drone::Assigned;
@@ -106,9 +106,14 @@ class Drone
 
 		move (moveX : Integer, moveY : Integer)
 		begin
-			self.position4drone.x := self.position4drone.x + moveX;
-			self.position4drone.y := self.position4drone.y + moveY;
+			declare p : Point;
+			p := Point.allInstances().select(p | p.x = self.position4drone.x + moveX and p.y = self.position4drone.y + moveY)->asSequence()->first();
+			delete (self,self.position4drone) from positionD;
+			insert (self, p) into positionD;
+			--self.position4drone.x := self.position4drone.x + moveX;
+			--self.position4drone.y := self.position4drone.y + moveY;
 			self.energy := self.energy -1;
+			
 		end
 
 		setOnWarehouse()
@@ -147,7 +152,7 @@ class Drone
 				batteryCharged
 			transitions
 				startUp -> waitingForCommand { create }
-				waitingForCommand -> commandAssigned { assign() }
+				waitingForCommand -> commandAssigned { assignate() }
 				commandAssigned -> productsCharged { fill() }
 				productsCharged -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
 				productsCharged -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
@@ -281,7 +286,7 @@ context Drone::fill()
 	pre droneIsEmpty: self.capacity = 0
 	--On considère qu'une commande correspond à un seul aller-retour
 
-context Drone::assign(c:Command)	
+context Drone::assignate(c:Command)	
 	--On considère qu'une commande correspond à un seul aller-retour
 	pre droneIsInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre noCommandYet: not Command.allInstances-> exists(c | self.cmd4drone = c) 
@@ -297,7 +302,7 @@ context Drone::move(moveX:Integer, moveY:Integer)
 	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY)
 	pre droneEnergyIsGreaterThan1 : self.energy > 0
 	pre exactlyOneUnitLenghtMove : moveX + moveY = 1
-	post droneChangedLocation : ((self.position4drone.x <> self.position4drone.x@pre) and (self.position4drone.y = self.position4drone.y@pre)) or ((self.position4drone.x = self.position4drone.x@pre) and (self.position4drone.y <> self.position4drone.y@pre))
+	--post droneChangedLocation : ((self.position4drone.x <> self.position4drone.x@pre) and (self.position4drone.y = self.position4drone.y@pre)) or ((self.position4drone.x = self.position4drone.x@pre) and (self.position4drone.y <> self.position4drone.y@pre))
 
 
 --___________________________
