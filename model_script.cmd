@@ -54,8 +54,6 @@ open model.use
 !set p3.weight :=5
 !set pt1.x := 1
 !set pt1.y := 0
-!set pts1.x := 1
-!set pts1.y := 0
 
 
 !insert (d1,w) into positionD
@@ -70,7 +68,7 @@ check
 
 !d1.assignate(c1)
 !d1.fill()
-!d1.setOnWarehouse()
 !d1.move(1,0)
 !d1.move(1,0)
+!d1.recharge()
 !d1.unloadAndValidate()

@@ -3,7 +3,6 @@ model Delivery
 
 enum Etat_Box {Free, Occupied, Full}
 enum Etat_Command {Waiting,Assigned,Finished}
-enum Etat_Drone {Created, WaitingForCommand, Assigned, Charging, OnWarehouse, OnAPoint, OnABox, FullBattery, Loaded, Empty}
 --_________________________
 --CLASSES
 --_________________________
@@ -65,7 +64,6 @@ class Drone
 	attributes 
 		energy : Integer init = 3
 		capacity : Integer init = 0
-		state : Etat_Drone init = Etat_Drone::WaitingForCommand
 	operations
 
 		distance(p:Point) : Integer = (self.position4drone.x - p.x).abs + (self.position4drone.y - p.y).abs;
@@ -73,7 +71,6 @@ class Drone
 		assignate(c : Command)
 		begin
 			insert(c, self) into delivery;
-			self.state := Etat_Drone::Assigned;
 		end
 
 		fill()
@@ -81,14 +78,12 @@ class Drone
 			for p in self.cmd4drone.product4cmd do
 				self.capacity := self.capacity + p.weight
 			end;
-			self.state := Etat_Drone::Loaded;
 		end
 
 		recharge ()
 		begin
 			-- TODO : time ++
 			self.energy := self.energy +1;
-			self.state := Etat_Drone::Charging;
 		end
 
 		unloadAndValidate()
@@ -110,30 +105,8 @@ class Drone
 			p := Point.allInstances().select(p | p.x = self.position4drone.x + moveX and p.y = self.position4drone.y + moveY)->asSequence()->first();
 			delete (self,self.position4drone) from positionD;
 			insert (self, p) into positionD;
-			--self.position4drone.x := self.position4drone.x + moveX;
-			--self.position4drone.y := self.position4drone.y + moveY;
 			self.energy := self.energy -1;
 			
-		end
-
-		setOnWarehouse()
-		begin
-			self.state := Etat_Drone::OnWarehouse
-		end
-
-		setOnABox()
-		begin
-			self.state := Etat_Drone::OnABox
-		end
-
-		setOnAPoint()
-		begin
-			self.state := Etat_Drone::OnAPoint
-		end
-
-		setEmpty()
-		begin
-			self.state := Etat_Drone::Empty;
 		end
 
 	statemachines
@@ -142,33 +115,22 @@ class Drone
 				startUp:initial
 				waitingForCommand
 				commandAssigned
-				productsCharged
-				onAPoint
-				onABox
-				onWarehouse
-				atDeliveryBox
-				unloaded
-				batteryCharging
+				ready
+				charging
+				unload
+				moving
 			transitions
 				startUp -> waitingForCommand { create }
 				waitingForCommand -> commandAssigned { assignate() }
-				commandAssigned -> productsCharged { fill() }
-				productsCharged -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
-				productsCharged -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
-				productsCharged -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
-				onWarehouse -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
-				onWarehouse -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
-				onWarehouse -> batteryCharging{[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
-				onAPoint -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
-				onAPoint -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
-				onABox -> batteryCharging {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
-				batteryCharging -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy = 3] setOnABox()}
-				batteryCharging -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0) and self.energy = 3] setOnWarehouse()}
-				batteryCharging -> batteryCharging {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy = 3] recharge()}
-				onABox -> unloaded {unloadAndValidate()}
-				-- atDeliveryBox -> unloaded {[self.capacity = 0] setEmpty()}
-				unloaded -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
-				unloaded -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
+				commandAssigned -> ready { fill() }
+				ready -> moving { move() }
+				moving -> moving { move() }
+				moving -> charging { recharge() }
+				moving -> unload { unloadAndValidate() }
+				charging -> charging { recharge() }
+				charging -> unload {unloadAndValidate()}
+				unload -> charging { recharge() }
+				unload -> moving { move() }
 		end
 end
 
