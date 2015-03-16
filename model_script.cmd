@@ -17,6 +17,9 @@ open model.use
 !create d1 : Drone
 !create d2 : Drone
 !create c1 : Command
+!create p1 : Product 
+!create p2 : Product 
+!create p3 : Product 
 
 !set w.x := 0 
 !set w.y := 0
@@ -44,11 +47,18 @@ open model.use
 !set b11.y := 0
 !set b12.x := 6
 !set b12.y := 1
+!set p1.weight :=3
+!set p2.weight :=4
+!set p3.weight :=5
 
 
 !insert (d1,w) into positionD
 !insert (d2,b8) into positionD
-! d1.recharge()
-! d1.fill()
+!insert (c1, p1) into command
+!insert (c1, p2) into command
+!insert (c1, p3) into command
+!insert (c1, b8) into destination
+-- ! d1.recharge()
+-- ! d1.fill()
 
 check

@@ -63,14 +63,14 @@ end
 class Drone
 
 	attributes 
-		energy : Integer init = 0
+		energy : Integer init = 3
 		capacity : Integer init = 0
 		state : Etat_Drone init = Etat_Drone::WaitingForCommand
 	operations
 
 		distance(p:Point) : Integer = (self.position4drone.x - p.x).abs + (self.position4drone.y - p.y).abs;
 		
-		assign(c : Command)
+		assignate(c : Command)
 		begin
 			insert(c, self) into delivery;
 			self.state := Etat_Drone::Assigned;
@@ -144,16 +144,16 @@ class Drone
 				atDeliveryBox
 				unloaded
 				batteryCharging
-				batteryCharged
 			transitions
 				startUp -> waitingForCommand { create }
-				waitingForCommand -> commandAssigned { assign() }
+				waitingForCommand -> commandAssigned { assignate() }
 				commandAssigned -> productsCharged { fill() }
 				productsCharged -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
 				productsCharged -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
 				productsCharged -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
 				onWarehouse -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
 				onWarehouse -> onAPoint {[Point.allInstances()->one(p | distance(p) = 0)] setOnAPoint()}
+				onWarehouse -> batteryCharging{[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
 				onAPoint -> onABox {[Box.allInstances()->one(b | b.distance(self) = 0)] setOnABox()}
 				onAPoint -> onWarehouse {[Warehouse.allInstances()->one(w | w.distance(self) = 0)] setOnWarehouse()}
 				onABox -> batteryCharging {[Box.allInstances()->one(b | b.distance(self) = 0) and self.energy < 3] recharge()}
@@ -248,21 +248,6 @@ context Box inv boxCapacityPositive : self.capacity >= 0
 context Box inv boxCapacityMax : self.capacity <= 50
 -- RCAP
 
---context Point inv numberOfNeighbours : 
---	(self.neighbour-> size >=2) and
---	(self.neighbour-> size <=4)
-
--- Il faut que les voisins ne soient pas à plus de 1
---context p:Point inv neighboursAreClose :
---	p.neighbour->forAll(n | 
---	(((n.x - p.x = 1) or
---	(n.x - p.x =-1)) and
---	n.y - p.y =0) or
---	(((n.y - p.y = 1) or
---	(n.y - p.y =-1)) and
---	n.x - p.x =0))
-
--- Voisins doivent être différents !!! Pas besoin mais expliquer dans le dossier
 
 context b1:Box inv transitiveClosureComplete :
 	b1.voisinsPlus()->includesAll(Box.allInstances())
@@ -280,8 +265,9 @@ context Drone::fill()
 	pre droneIsInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre droneIsEmpty: self.capacity = 0
 	--On considère qu'une commande correspond à un seul aller-retour
+	post droneIsntTooCharged : self.capacity <=20
 
-context Drone::assign(c:Command)	
+context Drone::assignate(c:Command)	
 	--On considère qu'une commande correspond à un seul aller-retour
 	pre droneIsInTheWh: Warehouse.allInstances->exists(w | w.distance(self) =0)
 	pre noCommandYet: not Command.allInstances-> exists(c | self.cmd4drone = c) 
@@ -292,6 +278,7 @@ context Drone::unloadAndValidate()
 	pre boxIsDestination : self.cmd4drone.cmdDestination.x=self.position4drone.x and self.cmd4drone.cmdDestination.y = self.position4drone.y
 	post droneIsEmpty : self.capacity = 0
 	post droneIsStillAtBox : Box.allInstances-> one(b | b.distance(self) =0) and not Warehouse.allInstances-> exists (w | w.distance(self) =0)
+	post boxCapacityIsntOverloaded : not Box.allInstances -> exists (b| b.capacity > 50)
 
 context Drone::move(moveX:Integer, moveY:Integer)
 	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY)
