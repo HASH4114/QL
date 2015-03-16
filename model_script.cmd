@@ -20,6 +20,7 @@ open model.use
 !create p1 : Product 
 !create p2 : Product 
 !create p3 : Product 
+!create pts1 : Point
 
 !set w.x := 0 
 !set w.y := 0
@@ -50,6 +51,9 @@ open model.use
 !set p1.weight :=3
 !set p2.weight :=4
 !set p3.weight :=5
+!set pts1.x := 1
+!set pts1.y := 0
+
 
 
 !insert (d1,w) into positionD

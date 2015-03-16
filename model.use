@@ -289,7 +289,7 @@ context Drone::move(moveX:Integer, moveY:Integer)
 	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY)
 	pre droneEnergyIsGreaterThan1 : self.energy > 0
 	pre exactlyOneUnitLenghtMove : moveX + moveY = 1
-	--post droneChangedLocation : ((self.position4drone.x <> self.position4drone.x@pre) and (self.position4drone.y = self.position4drone.y@pre)) or ((self.position4drone.x = self.position4drone.x@pre) and (self.position4drone.y <> self.position4drone.y@pre))
+	post droneChangedLocation : (self.position4drone <> self.position4drone@pre)
 
 
 --___________________________
