@@ -20,7 +20,7 @@ end
 
 class Box < Point
     attributes
-        capacity : Integer
+        capacity : Integer init = 0
         state : Etat_Box init = Etat_Box::Free
     operations 
         voisins() : Set(Box) =
@@ -184,10 +184,10 @@ constraints
 context Warehouse inv oneWarehouse : Warehouse.allInstances->size=1
 
 
-context b1,b2:Box inv noTwoBoxesAtSamePlace : 
-	 (b1.x = b2.x) and 
-	 (b1.y = b2.y)
-	 implies b1 = b2
+context p1,p2:Point inv noTwoPointsAtSamePlace : 
+	 (p1.x = p2.x) and 
+	 (p1.y = p2.y)
+	 implies p1 = p2
 
 context p:Point inv noTwoDronesAtSameSpot:
 	if not p.oclIsTypeOf(Warehouse) then
@@ -198,9 +198,9 @@ context p:Point inv noTwoDronesAtSameSpot:
 	endif
 
 context Drone inv batteryLevel : self.energy >= 0 and self.energy <= 3 
-context Drone inv maxDroneNb : Drone.allInstances -> size <= 15
+context Drone inv maxDroneNb : Drone.allInstances -> size <= 5
 -- DNB
-context Box inv maxBoxNb : Box.allInstances -> size <=20
+context Box inv maxBoxNb : Box.allInstances -> size <= 15
 -- RNB
 context Drone inv droneCapacityLevel : self.capacity >= 0 and self.capacity <= 20 
 -- DCAP
@@ -240,9 +240,9 @@ context Drone::unloadAndValidate()
 	post boxCapacityIsntOverloaded : not Box.allInstances -> exists (b| b.capacity > 50)
 
 context Drone::move(moveX:Integer, moveY:Integer)
-	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY)
+	pre nothingAtDestination : not Drone.allInstances -> exists(d2 | d2.position4drone.x = self.position4drone.x + moveX and d2.position4drone.y = self.position4drone.y + moveY) or (Point.allInstances().select(p | p.x = self.position4drone.x + moveX and p.y = self.position4drone.y + moveY)->asSequence()->first().oclIsTypeOf(Warehouse))
 	pre droneEnergyIsGreaterThan1 : self.energy > 0
-	pre exactlyOneUnitLenghtMove : moveX + moveY = 1
+	pre exactlyOneUnitLenghtMove : (moveX + moveY).abs = 1
 	post droneChangedLocation : (self.position4drone <> self.position4drone@pre)
 
 
@@ -256,8 +256,8 @@ association command between
 end
 
 association delivery between
-	Command [1] role cmd4drone
-	Drone [1] role drone4cmd
+	Command [0..1] role cmd4drone
+	Drone [0..1] role drone4cmd
 end
 
 association destination between
@@ -266,6 +266,6 @@ association destination between
 end
 
 association positionD between
-	Drone [0..1] role drone4position
+	Drone [0..*] role drone4position
 	Point [1] role position4drone
 end

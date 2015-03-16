@@ -17,11 +17,63 @@ open model.use
 !create d1 : Drone
 !create d2 : Drone
 !create c1 : Command
+!create c2 : Command
 !create p1 : Product 
 !create p2 : Product 
 !create p3 : Product
+!create p11 : Product 
+!create p22: Product 
+!create p33 : Product
 !create pt1 : Point 
-!create pts1 : Point
+!create pt2 : Point 
+!create pt3 : Point 
+!create pt4 : Point 
+!create pt5 : Point 
+!create pt6 : Point 
+!create pt7 : Point 
+!create pt8 : Point 
+!create pt9 : Point 
+!create pt10 : Point 
+!create pt11 : Point 
+!create pt12 : Point 
+!create pt13 : Point 
+!create pt14 : Point 
+!create pt15 : Point 
+!create pt16 : Point 
+!create pt17 : Point 
+!create pt18 : Point 
+!create pt19 : Point
+!create pt20 : Point
+!create pt21 : Point
+!create pt22 : Point
+!create pt23 : Point
+!create pt24 : Point
+!create pt25 : Point
+!create pt26 : Point
+!create pt27 : Point
+!create pt28 : Point
+!create pt29 : Point
+!create pt30 : Point
+!create pt31 : Point
+!create pt32 : Point
+!create pt33 : Point
+!create pt34 : Point
+!create pt35 : Point
+!create pt36 : Point
+!create pt37 : Point
+!create pt38 : Point
+!create pt39 : Point
+!create pt40 : Point
+!create pt41 : Point
+!create pt42 : Point
+!create pt43 : Point
+!create pt44 : Point
+!create pt45 : Point
+!create pt46 : Point
+!create pt47 : Point
+!create pt48 : Point
+!create pt49 : Point
+!create pt50 : Point
 
 !set w.x := 2 
 !set w.y := 4
@@ -49,9 +101,6 @@ open model.use
 !set b11.y := 4
 !set b12.x := 8
 !set b12.y := 5
-!set p1.weight :=3
-!set p2.weight :=4
-!set p3.weight :=5
 !set pt1.x := 0
 !set pt1.y := 0
 !set pt2.x := 0
@@ -152,20 +201,22 @@ open model.use
 !set pt49.y := 4
 !set pt50.x := 8
 !set pt50.y := 6
+!set p1.weight :=3
+!set p2.weight :=4
+!set p3.weight :=5
+!set p11.weight :=3
+!set p22.weight :=4
+!set p33.weight :=5
 
 !insert (d1,w) into positionD
---!insert (d2,b8) into positionD
+!insert (d2,w) into positionD
 !insert (c1, p1) into command
 !insert (c1, p2) into command
 !insert (c1, p3) into command
+!insert (c2, p11) into command
+!insert (c2, p22) into command
+!insert (c2, p33) into command
 !insert (c1, b8) into destination
+!insert (c2, b9) into destination
 
 check
-
-
-!d1.assignate(c1)
-!d1.fill()
-!d1.move(1,0)
-!d1.move(1,0)
-!d1.recharge()
-!d1.unloadAndValidate()
