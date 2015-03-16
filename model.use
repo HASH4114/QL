@@ -189,12 +189,6 @@ context b1,b2:Box inv noTwoBoxesAtSamePlace :
 	 (b1.y = b2.y)
 	 implies b1 = b2
 
-
-context d1,d2:Drone inv noTwoDronesAtSamePlace :
-	(d1.position4drone.x = d2.position4drone.x) and
-	(d1.position4drone.y = d2.position4drone.y)
-	implies d1 = d2
-
 context p:Point inv noTwoDronesAtSameSpot:
 	if not p.oclIsTypeOf(Warehouse) then
 		Drone.allInstances().select(d|d.distance(p) = 0)->size() <= 1 and
@@ -203,20 +197,14 @@ context p:Point inv noTwoDronesAtSameSpot:
 		Drone.allInstances().select(d|d.distance(p) = 0)->size() >= 0
 	endif
 
-context w:Warehouse inv neighbourBoxNearWarehouse :
-    Box.allInstances() -> exists (b | d(b) < 3 )
-
-context Drone inv batteryPositive : self.energy >= 0
-context Drone inv batteryNotTooHigh : self.energy <= 3 
+context Drone inv batteryLevel : self.energy >= 0 and self.energy <= 3 
 context Drone inv maxDroneNb : Drone.allInstances -> size <= 15
 -- DNB
 context Box inv maxBoxNb : Box.allInstances -> size <=20
 -- RNB
-context Drone inv droneCapacityPositive : self.capacity >= 0
-context Drone inv droneCapacityMax : self.capacity <= 20 
+context Drone inv droneCapacityLevel : self.capacity >= 0 and self.capacity <= 20 
 -- DCAP
-context Box inv boxCapacityPositive : self.capacity >= 0
-context Box inv boxCapacityMax : self.capacity <= 50
+context Box inv boxCapacityLevel : self.capacity >= 0 and self.capacity <= 50
 -- RCAP
 
 
