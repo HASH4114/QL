@@ -127,10 +127,13 @@ class Drone
 				moving -> moving { move() }
 				moving -> charging { recharge() }
 				moving -> unload { unloadAndValidate() }
+				moving -> commandAssigned { assignate() }
 				charging -> charging { recharge() }
 				charging -> unload {unloadAndValidate()}
+				charging -> moving { move() }
 				unload -> charging { recharge() }
 				unload -> moving { move() }
+				unload -> commandAssigned { assignate() }
 		end
 end
 
